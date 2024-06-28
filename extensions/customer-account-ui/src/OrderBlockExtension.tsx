@@ -9,7 +9,7 @@ function BlockExtension() {
   return (
     <Card padding>
       <InlineStack inlineAlignment="center" spacing="tight">
-        <Text>Your team have submitted PO Requests.</Text>
+        <Text>Your team members submitted PO Requests.</Text>
         <Link to="extension:customer-account-ui/">View approval queue</Link>
       </InlineStack>
     </Card>

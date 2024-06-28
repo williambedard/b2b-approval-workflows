@@ -17,32 +17,22 @@ export default reactExtension(
   "customer-account.page.render",
   () => <FullPageExtension />
 );
-interface OrderApproval {
+interface DraftOrder {
   node: {
     id: string;
-    type: string;
-    handle: string;
-    identifier: {
-      value: string;
-    };
-    requires_approval: {
-      value: boolean;
-    };
-    approver_email: {
-      value: string;
-    };
-    approval_status: {
-      value: string;
-    };
-    order_details: {
-      value: string;
-    };
+    name: string;
+    line_items: { title: string; quantity: number }[];
+    customer: { first_name: string; last_name: string };
+    shipping_address: { address1: string };
+    total_price: string;
+    currency: string;
+    payment_terms: string | null;
   }
 }
 
 function FullPageExtension() {
   const { i18n, query } = useApi<"customer-account.page.render">();
-  const [approvals, setApprovals] = useState<OrderApproval[]>([])
+  const [approvals, setApprovals] = useState<DraftOrder[]>([])
   const [loading, setLoading] = useState(false)
   const [removeLoading, setRemoveLoading] = useState({ id: null, loading: false })
 
@@ -51,33 +41,41 @@ function FullPageExtension() {
     try {
       // Implement a server request to retrieve the approvals for this customer
       // Then call the Storefront API to retrieve the details of the approvalsed products
-      const data = await query<{ metaobjects: { edges: OrderApproval[] } }>(
-        `{
-          metaobjects(type: "order_approval", first: 10) {
+      const data = await query<{ metaobjects: { edges: DraftOrder[] } }>(
+        ` {
+        draftOrders(first: 10, query: "metafield:'draftorder.requiresapproval:true'") {
             edges {
               node {
-                handle
                 id
-                type
-                identifier: field(key:"identifier"){
-                  value
+                name
+                totalPrice
+                customer {
+                  firstName
+                  lastName
                 }
-                requires_approval: field(key:"requires_approval"){
-                  value
+                metafields(first: 5) {
+                  edges {
+                    node {
+                      namespace
+                      key
+                      value
+                    }
+                  }
                 }
-                approver_email: field(key:"approver_email"){
-                  value
-                }
-                approval_status: field(key:"approval_status"){
-                  value
-                }
-                order_details: field(key:"order_details"){
-                  value
+                lineItems(first: 5) {
+                  edges {
+                    node {
+                      title
+                      quantity
+                      price
+                    }
+                  }
                 }
               }
             }
           }
         }`,
+        
       );
       let incomingApprovals = data.data.metaobjects.edges
       setApprovals(incomingApprovals)
